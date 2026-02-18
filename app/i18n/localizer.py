@@ -1,0 +1,223 @@
+from __future__ import annotations
+
+"""Runtime localization service for UI text keys."""
+
+from PyQt5.QtCore import QObject, pyqtSignal
+
+
+class Localizer(QObject):
+    """Hold translation dictionaries and expose key-based lookup."""
+
+    locale_changed = pyqtSignal(str)
+
+    def __init__(self, default_locale: str = "zh_CN") -> None:
+        super().__init__()
+        self._locale = default_locale if default_locale in {"zh_CN", "en_US"} else "zh_CN"
+        # Translation keys are grouped by locale for simple in-memory lookup.
+        self._messages = {
+            "zh_CN": {
+                "app_title": "Arithmetic Practice Assistant",
+                "warning_title": "提示",
+                "setup_subtitle": "请先设置练习参数",
+                "setup_group_title": "练习设置",
+                "label_language": "语言",
+                "language_zh": "中文",
+                "language_en": "English",
+                "label_ocr_backend": "识别引擎",
+                "ocr_google_vision": "Google Vision",
+                "ocr_baidu": "百度OCR",
+                "ocr_tencent": "腾讯云OCR",
+                "ocr_tesseract": "Tesseract (本地)",
+                "ocr_paddle": "PaddleOCR (本地)",
+                "ocr_sklearn": "本地SVM模型",
+                "warning_backend_unavailable": "识别引擎 [{backend}] 不可用，请检查 API Key 或相关依赖是否已安装。",
+                "label_student_name": "学生姓名:",
+                "placeholder_student_name": "输入学生姓名",
+                "label_operations": "运算类型:",
+                "op_add": "加法",
+                "op_sub": "减法",
+                "op_mul": "乘法",
+                "op_div": "除法",
+                "op_mixed": "混合运算",
+                "label_difficulty": "难度范围:",
+                "difficulty_easy": "简单 (1-10)",
+                "difficulty_medium": "中等 (1-50)",
+                "difficulty_hard": "困难 (1-100)",
+                "label_mixed_operator_count": "混合运算符数量:",
+                "label_parentheses": "括号设置:",
+                "parentheses_enable": "启用括号",
+                "label_max_parentheses_pairs": "最大括号对数:",
+                "label_question_count": "题目数量:",
+                "btn_view_history": "查看历史",
+                "btn_start_practice": "开始练习",
+                "warning_enter_name": "请输入学生姓名",
+                "warning_select_operation": "至少选择一种运算类型",
+                "practice_progress": "第 {current} / {total} 题",
+                "practice_question_placeholder": "题目将在这里显示",
+                "practice_canvas_tip": "手写区域（用于练习）",
+                "practice_answer_label": "输入答案:",
+                "practice_answer_placeholder": "仅支持数字",
+                "practice_score": "当前得分: {correct} / {answered}",
+                "practice_recognized_empty": "识别结果: （暂无）",
+                "practice_recognized_value": "识别结果: {value}",
+                "btn_quit_session": "退出本轮",
+                "btn_clear_canvas": "清空手写",
+                "btn_recognize": "识别手写",
+                "btn_submit": "提交",
+                "btn_next": "下一题",
+                "warning_enter_answer": "请输入答案",
+                "warning_recognition_failed": "未识别到有效数字，请写大一些或分开写每位数字。",
+                "confirm_quit_title": "确认退出",
+                "confirm_quit_message": "确定退出当前练习并返回主界面吗？",
+                "feedback_correct": "回答正确，继续保持！",
+                "feedback_wrong": "回答错误，正确答案是 {answer}",
+                "summary_title": "本轮练习完成！",
+                "summary_score": "得分: {score} / {total}",
+                "summary_accuracy": "正确率: {accuracy:.2f}%",
+                "summary_time": "用时: {time}",
+                "table_question": "题目",
+                "table_your_answer": "你的答案",
+                "table_correct_answer": "正确答案",
+                "table_result": "结果",
+                "status_correct": "正确",
+                "status_wrong": "错误",
+                "btn_back_menu": "返回主菜单",
+                "history_title": "历史成绩",
+                "history_filter_placeholder": "按姓名筛选（留空显示全部）",
+                "btn_search": "查询",
+                "table_date": "日期",
+                "table_name": "姓名",
+                "table_score": "得分",
+                "table_accuracy": "正确率",
+                "table_time": "用时",
+                "table_details": "详情",
+                "btn_view": "查看",
+                "history_summary_stats": "统计对象: {name}  |  练习次数: {count}  |  平均正确率: {accuracy:.2f}%",
+                "history_summary_all": "全部学生",
+                "history_summary_empty": "暂无历史记录",
+                "detail_window_title": "练习详情 - {username}",
+                "detail_info": "日期: {timestamp}\n得分: {score}/{total}  正确率: {accuracy:.2f}%  用时: {time}",
+                "detail_line": "{index}. {question} = {correct} | 你的答案: {answer} | {status}",
+                "detail_none": "该会话没有题目详情。",
+                "btn_close": "关闭",
+                "error_start_failed": "开始练习失败: {error}",
+                "error_submit_failed": "提交失败: {error}",
+                "error_finish_failed": "结束练习失败: {error}",
+                "error_load_failed": "读取历史失败: {error}",
+                "error_empty_answer": "请输入答案",
+            },
+            "en_US": {
+                "app_title": "Arithmetic Practice Assistant",
+                "warning_title": "Notice",
+                "setup_subtitle": "Configure practice settings first",
+                "setup_group_title": "Practice Settings",
+                "label_language": "Language",
+                "language_zh": "Chinese",
+                "language_en": "English",
+                "label_ocr_backend": "OCR Backend",
+                "ocr_google_vision": "Google Vision",
+                "ocr_baidu": "Baidu OCR",
+                "ocr_tencent": "Tencent Cloud OCR",
+                "ocr_tesseract": "Tesseract (Local)",
+                "ocr_paddle": "PaddleOCR (Local)",
+                "ocr_sklearn": "Local SVM Model",
+                "warning_backend_unavailable": "Backend [{backend}] is unavailable. Check API key or required dependencies.",
+                "label_student_name": "Student Name:",
+                "placeholder_student_name": "Enter student name",
+                "label_operations": "Operations:",
+                "op_add": "Addition",
+                "op_sub": "Subtraction",
+                "op_mul": "Multiplication",
+                "op_div": "Division",
+                "op_mixed": "Mixed",
+                "label_difficulty": "Difficulty:",
+                "difficulty_easy": "Easy (1-10)",
+                "difficulty_medium": "Medium (1-50)",
+                "difficulty_hard": "Hard (1-100)",
+                "label_mixed_operator_count": "Mixed Operator Count:",
+                "label_parentheses": "Parentheses:",
+                "parentheses_enable": "Enable Parentheses",
+                "label_max_parentheses_pairs": "Max Pairs:",
+                "label_question_count": "Question Count:",
+                "btn_view_history": "View History",
+                "btn_start_practice": "Start Practice",
+                "warning_enter_name": "Please enter student name",
+                "warning_select_operation": "Select at least one operation",
+                "practice_progress": "Question {current} / {total}",
+                "practice_question_placeholder": "Question will appear here",
+                "practice_canvas_tip": "Handwriting area (for practice)",
+                "practice_answer_label": "Answer:",
+                "practice_answer_placeholder": "Numbers only",
+                "practice_score": "Score so far: {correct} / {answered}",
+                "practice_recognized_empty": "Recognized: (empty)",
+                "practice_recognized_value": "Recognized: {value}",
+                "btn_quit_session": "Quit Session",
+                "btn_clear_canvas": "Clear Canvas",
+                "btn_recognize": "Recognize",
+                "btn_submit": "Submit",
+                "btn_next": "Next",
+                "warning_enter_answer": "Please enter an answer",
+                "warning_recognition_failed": "Could not recognize digits. Write larger and separate digits.",
+                "confirm_quit_title": "Confirm Quit",
+                "confirm_quit_message": "Quit this session and return to menu?",
+                "feedback_correct": "Correct! Keep going!",
+                "feedback_wrong": "Incorrect. Correct answer: {answer}",
+                "summary_title": "Session Complete!",
+                "summary_score": "Score: {score} / {total}",
+                "summary_accuracy": "Accuracy: {accuracy:.2f}%",
+                "summary_time": "Time: {time}",
+                "table_question": "Question",
+                "table_your_answer": "Your Answer",
+                "table_correct_answer": "Correct Answer",
+                "table_result": "Result",
+                "status_correct": "Correct",
+                "status_wrong": "Wrong",
+                "btn_back_menu": "Back to Menu",
+                "history_title": "History",
+                "history_filter_placeholder": "Filter by name (empty for all)",
+                "btn_search": "Search",
+                "table_date": "Date",
+                "table_name": "Name",
+                "table_score": "Score",
+                "table_accuracy": "Accuracy",
+                "table_time": "Time",
+                "table_details": "Details",
+                "btn_view": "View",
+                "history_summary_stats": "Target: {name}  |  Sessions: {count}  |  Avg Accuracy: {accuracy:.2f}%",
+                "history_summary_all": "All Students",
+                "history_summary_empty": "No history records",
+                "detail_window_title": "Session Details - {username}",
+                "detail_info": "Date: {timestamp}\nScore: {score}/{total}  Accuracy: {accuracy:.2f}%  Time: {time}",
+                "detail_line": "{index}. {question} = {correct} | Your answer: {answer} | {status}",
+                "detail_none": "No question details in this session.",
+                "btn_close": "Close",
+                "error_start_failed": "Failed to start session: {error}",
+                "error_submit_failed": "Failed to submit answer: {error}",
+                "error_finish_failed": "Failed to finish session: {error}",
+                "error_load_failed": "Failed to load history: {error}",
+                "error_empty_answer": "Please enter an answer",
+            },
+        }
+
+    @property
+    def locale(self) -> str:
+        return self._locale
+
+    def set_locale(self, locale: str) -> None:
+        """Switch active locale and notify listeners if changed."""
+        if locale not in self._messages:
+            return
+        if locale == self._locale:
+            return
+        self._locale = locale
+        self.locale_changed.emit(locale)
+
+    def tr(self, key: str, **kwargs) -> str:
+        """Translate key for current locale with optional format args."""
+        template = self._messages.get(self._locale, {}).get(key)
+        if template is None:
+            template = self._messages["en_US"].get(key, key)
+        try:
+            return template.format(**kwargs)
+        except Exception:
+            return template

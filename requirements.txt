@@ -1,0 +1,9 @@
+PyQt5
+numpy
+scikit-learn
+
+# Optional OCR backends (install as needed):
+# pytesseract        # Tesseract backend (also requires Tesseract binary)
+# Pillow             # Required by Tesseract and PaddleOCR backends
+# paddleocr          # PaddleOCR backend
+# paddlepaddle       # PaddleOCR dependency
