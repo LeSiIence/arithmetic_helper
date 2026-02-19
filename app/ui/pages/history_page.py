@@ -1,21 +1,69 @@
 from __future__ import annotations
 
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QBrush, QColor
 from PyQt5.QtWidgets import (
     QDialog,
+    QFrame,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QPushButton,
+    QStyle,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
     QTableWidget,
     QTableWidgetItem,
-    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
 
+# 历史列表：按正确率着色（≥80% 绿 / ≥60% 黄 / <60% 红）
+_HISTORY_ACCURACY_HIGH_BG = QColor("#c6f6d5")
+_HISTORY_ACCURACY_HIGH_FG = QColor("#166534")
+_HISTORY_ACCURACY_MID_BG = QColor("#fefce8")
+_HISTORY_ACCURACY_MID_FG = QColor("#854d0e")
+_HISTORY_ACCURACY_LOW_BG = QColor("#fed7d7")
+_HISTORY_ACCURACY_LOW_FG = QColor("#991b1b")
+
+# 历史详情弹窗：按题目对错着色
+_DETAIL_CORRECT_BG = QColor("#c6f6d5")
+_DETAIL_CORRECT_FG = QColor("#166534")
+_DETAIL_WRONG_BG = QColor("#fed7d7")
+_DETAIL_WRONG_FG = QColor("#991b1b")
+
 from app.domain.models import SessionResult
 from app.i18n.localizer import Localizer
+
+
+class _ColoredItemDelegate(QStyledItemDelegate):
+    """Manually paints per-item BackgroundRole / ForegroundRole colors,
+    bypassing qt_material's application-level stylesheet overrides."""
+
+    def paint(self, painter, option, index):
+        painter.save()
+        if option.state & QStyle.State_Selected:
+            painter.fillRect(option.rect, option.palette.highlight())
+        else:
+            bg = index.data(Qt.BackgroundRole)
+            if isinstance(bg, QBrush) and bg.style() != Qt.NoBrush:
+                painter.fillRect(option.rect, bg)
+
+        text = index.data(Qt.DisplayRole)
+        if text is not None:
+            if option.state & QStyle.State_Selected:
+                painter.setPen(option.palette.highlightedText().color())
+            else:
+                fg = index.data(Qt.ForegroundRole)
+                if isinstance(fg, QBrush):
+                    painter.setPen(fg.color())
+                else:
+                    painter.setPen(option.palette.text().color())
+            text_rect = option.rect.adjusted(6, 0, -6, 0)
+            painter.drawText(text_rect, Qt.AlignVCenter | Qt.AlignLeft, str(text))
+
+        painter.restore()
 
 
 class HistoryPage(QWidget):
@@ -36,7 +84,7 @@ class HistoryPage(QWidget):
         root.setSpacing(12)
 
         self.title_label = QLabel("")
-        self.title_label.setStyleSheet("font-size: 24px; font-weight: 700;")
+        self.title_label.setProperty("class", "page_title")
         root.addWidget(self.title_label)
 
         filter_row = QHBoxLayout()
@@ -52,19 +100,19 @@ class HistoryPage(QWidget):
         root.addLayout(filter_row)
 
         self.table = QTableWidget(0, 6)
+        self.table.setItemDelegate(_ColoredItemDelegate(self.table))
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         root.addWidget(self.table)
 
         self.summary_label = QLabel("")
-        self.summary_label.setStyleSheet("font-size: 14pt; color: #374151;")
+        self.summary_label.setProperty("class", "summary_stat")
         root.addWidget(self.summary_label)
 
         self.search_button.clicked.connect(self._emit_search)
         self.filter_edit.returnPressed.connect(self._emit_search)
         self.back_button.clicked.connect(self.back_to_menu_requested.emit)
-        self.setStyleSheet("QWidget { font-size: 14pt; } QPushButton { padding: 6px 12px; }")
 
     def retranslate_ui(self) -> None:
         tr = self._localizer.tr
@@ -90,6 +138,7 @@ class HistoryPage(QWidget):
         self._current_filter = name_filter
         self.table.setRowCount(len(sessions))
         for row, item in enumerate(sessions):
+            # 历史记录行着色：按正确率整行着色（≥80% 绿 / ≥60% 黄 / <60% 红）
             score_text = f"{item.score} / {item.total}"
             values = [
                 item.timestamp,
@@ -98,8 +147,12 @@ class HistoryPage(QWidget):
                 f"{item.accuracy:.2f}%",
                 self._format_seconds(item.elapsed_seconds),
             ]
+            bg, fg = self._accuracy_colors(item.accuracy)
             for col, value in enumerate(values):
-                self.table.setItem(row, col, QTableWidgetItem(value))
+                cell = QTableWidgetItem(value)
+                cell.setBackground(QBrush(bg))
+                cell.setForeground(QBrush(fg))
+                self.table.setItem(row, col, cell)
 
             detail_button = QPushButton(tr("btn_view"))
             detail_button.clicked.connect(lambda _, idx=row: self._show_details(idx))
@@ -125,43 +178,94 @@ class HistoryPage(QWidget):
 
         dialog = QDialog(self)
         dialog.setWindowTitle(tr("detail_window_title", username=session.username))
-        dialog.resize(700, 500)
-        layout = QVBoxLayout(dialog)
-        info = QLabel(
-            tr(
-                "detail_info",
-                timestamp=session.timestamp,
-                score=session.score,
-                total=session.total,
-                accuracy=session.accuracy,
-                time=self._format_seconds(session.elapsed_seconds),
-            )
+        dialog.resize(720, 520)
+        dialog.setStyleSheet(
+            "QDialog { background: palette(window); } "
+            "QFrame#detailHeader { "
+            "  background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #f0f9ff, stop:1 #e0f2fe); "
+            "  border: 1px solid #bae6fd; border-radius: 10px; "
+            "  padding: 12px; "
+            "} "
+            "QLabel[class=\"detailStat\"] { font-size: 13pt; font-weight: 600; color: #0c4a6e; } "
+            "QLabel[class=\"detailStatValue\"] { font-size: 14pt; font-weight: 700; color: #0369a1; } "
+            "QTableWidget { gridline-color: #e2e8f0; border-radius: 6px; } "
+            "QTableWidget::item { padding: 6px; } "
         )
-        info.setStyleSheet("font-size: 13pt;")
-        layout.addWidget(info)
 
-        text = QTextEdit()
-        text.setReadOnly(True)
-        lines = []
-        for i, detail in enumerate(session.details, start=1):
-            status = tr("status_correct") if detail.is_correct else tr("status_wrong")
-            lines.append(
-                tr(
-                    "detail_line",
-                    index=i,
-                    question=detail.question,
-                    correct=detail.correct_answer,
-                    answer=detail.user_answer,
-                    status=status,
-                )
-            )
-        text.setPlainText("\n".join(lines) if lines else tr("detail_none"))
-        layout.addWidget(text)
+        layout = QVBoxLayout(dialog)
+        layout.setSpacing(16)
 
-        close_button = QPushButton(tr("btn_close"))
-        close_button.clicked.connect(dialog.accept)
-        layout.addWidget(close_button)
+        header = QFrame(dialog)
+        header.setObjectName("detailHeader")
+        header_layout = QGridLayout(header)
+        header_layout.setSpacing(8)
+        header_layout.addWidget(self._detail_stat_label(tr("table_date")), 0, 0)
+        header_layout.addWidget(self._detail_value_label(session.timestamp), 0, 1)
+        header_layout.addWidget(self._detail_stat_label(tr("table_score")), 1, 0)
+        header_layout.addWidget(self._detail_value_label(f"{session.score} / {session.total}"), 1, 1)
+        header_layout.addWidget(self._detail_stat_label(tr("table_accuracy")), 2, 0)
+        header_layout.addWidget(self._detail_value_label(f"{session.accuracy:.2f}%"), 2, 1)
+        header_layout.addWidget(self._detail_stat_label(tr("table_time")), 3, 0)
+        header_layout.addWidget(self._detail_value_label(self._format_seconds(session.elapsed_seconds)), 3, 1)
+        layout.addWidget(header)
+
+        table = QTableWidget(0, 4)
+        table.setItemDelegate(_ColoredItemDelegate(table))
+        table.setHorizontalHeaderLabels([
+            tr("table_question"),
+            tr("table_your_answer"),
+            tr("table_correct_answer"),
+            tr("table_result"),
+        ])
+        table.horizontalHeader().setStretchLastSection(True)
+        table.verticalHeader().setVisible(False)
+        table.setEditTriggers(QTableWidget.NoEditTriggers)
+        table.setAlternatingRowColors(False)
+
+        if session.details:
+            table.setRowCount(len(session.details))
+            for r, item in enumerate(session.details):
+                # 历史详情逐题着色：对=绿，错=红
+                status = tr("status_correct") if item.is_correct else tr("status_wrong")
+                bg = QBrush(_DETAIL_CORRECT_BG if item.is_correct else _DETAIL_WRONG_BG)
+                fg = QBrush(_DETAIL_CORRECT_FG if item.is_correct else _DETAIL_WRONG_FG)
+                for c, value in enumerate([item.question, str(item.user_answer), str(item.correct_answer), status]):
+                    cell = QTableWidgetItem(value)
+                    cell.setBackground(bg)
+                    cell.setForeground(fg)
+                    table.setItem(r, c, cell)
+        else:
+            table.setRowCount(1)
+            cell = QTableWidgetItem(tr("detail_none"))
+            table.setItem(0, 0, cell)
+            table.setSpan(0, 0, 1, 4)
+
+        layout.addWidget(table)
+
+        close_btn = QPushButton(tr("btn_close"))
+        close_btn.setMinimumHeight(40)
+        close_btn.clicked.connect(dialog.accept)
+        layout.addWidget(close_btn)
         dialog.exec_()
+
+    def _detail_stat_label(self, text: str) -> QLabel:
+        label = QLabel(text + ":")
+        label.setProperty("class", "detailStat")
+        return label
+
+    def _detail_value_label(self, text: str) -> QLabel:
+        label = QLabel(text)
+        label.setProperty("class", "detailStatValue")
+        return label
+
+    @staticmethod
+    def _accuracy_colors(accuracy: float) -> tuple[QColor, QColor]:
+        """历史记录行着色：≥80% 绿，≥60% 黄，<60% 红。"""
+        if accuracy >= 80:
+            return _HISTORY_ACCURACY_HIGH_BG, _HISTORY_ACCURACY_HIGH_FG
+        if accuracy >= 60:
+            return _HISTORY_ACCURACY_MID_BG, _HISTORY_ACCURACY_MID_FG
+        return _HISTORY_ACCURACY_LOW_BG, _HISTORY_ACCURACY_LOW_FG
 
     @staticmethod
     def _format_seconds(total_seconds: int) -> str:

@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
 import sys
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QStackedWidget
+from qt_material import apply_stylesheet
 
 from app.controllers.practice_controller import PracticeController
 from app.i18n.localizer import Localizer
@@ -34,7 +36,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self) -> None:
         super().__init__()
-        self.localizer = Localizer(default_locale="zh_CN")
+        self.localizer = Localizer(default_locale="en_US")
         self.setWindowTitle(self.localizer.tr("app_title"))
         self.resize(1200, 900)
 
@@ -164,11 +166,31 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(self.localizer.tr("app_title"))
 
 
+_CUSTOM_CSS = Path(__file__).resolve().parent / "custom.css"
+
+
 def run_app() -> None:
     """Application bootstrap entrypoint used by ``main.py``."""
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
     app = QApplication(sys.argv)
+
+    extra = {
+        "danger": "#dc3545",
+        "warning": "#ffc107",
+        "success": "#17a2b8",
+        "font_family": "Microsoft YaHei, Segoe UI, sans-serif",
+        "font_size": "14px",
+        "density_scale": "0",
+    }
+    apply_stylesheet(
+        app,
+        theme="light_blue.xml",
+        invert_secondary=True,
+        extra=extra,
+        css_file=str(_CUSTOM_CSS),
+    )
+
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())

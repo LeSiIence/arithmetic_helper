@@ -43,9 +43,9 @@ class SetupPage(QWidget):
         root.setSpacing(14)
 
         self.title_label = QLabel("")
-        self.title_label.setStyleSheet("font-size: 24px; font-weight: 700;")
+        self.title_label.setProperty("class", "page_title")
         self.subtitle_label = QLabel("")
-        self.subtitle_label.setStyleSheet("font-size: 15px; color: #4b5563;")
+        self.subtitle_label.setProperty("class", "subtitle")
 
         language_row = QHBoxLayout()
         self.language_label = QLabel("")
@@ -155,7 +155,7 @@ class SetupPage(QWidget):
         self.start_button = QPushButton("")
         self.history_button.setMinimumHeight(44)
         self.start_button.setMinimumHeight(44)
-        self.start_button.setStyleSheet("font-weight: 700;")
+        self.start_button.setProperty("class", "primary_action")
         button_row.addWidget(self.history_button)
         button_row.addWidget(self.start_button)
         root.addLayout(button_row)
@@ -169,13 +169,6 @@ class SetupPage(QWidget):
         self.language_combo.currentIndexChanged.connect(self._on_locale_changed)
         self._on_mixed_changed(self.mixed_box.isChecked())
 
-        self.setStyleSheet(
-            """
-            QWidget { font-size: 14pt; }
-            QGroupBox { font-size: 14pt; font-weight: 700; }
-            QPushButton { padding: 6px 12px; }
-            """
-        )
 
     def retranslate_ui(self) -> None:
         tr = self._localizer.tr

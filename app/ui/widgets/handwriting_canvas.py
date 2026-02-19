@@ -14,7 +14,6 @@ class HandwritingCanvas(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setMinimumHeight(280)
-        self.setStyleSheet("background: #ffffff; border: 2px solid #9aa4b2; border-radius: 8px;")
 
         self._image = QImage(1, 1, QImage.Format_RGB32)
         self._image.fill(QColor("white"))

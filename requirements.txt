@@ -1,6 +1,7 @@
 PyQt5
 numpy
 scikit-learn
+qt-material
 
 # Optional OCR backends (install as needed):
 # pytesseract        # Tesseract backend (also requires Tesseract binary)

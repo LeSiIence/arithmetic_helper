@@ -1,0 +1,92 @@
+/* Page titles */
+*[class="page_title"] {{
+  font-size: 24pt;
+  font-weight: 700;
+}}
+
+/* Subtitle / secondary text */
+*[class="subtitle"] {{
+  font-size: 15px;
+}}
+
+/* Question expression display */
+*[class="question"] {{
+  font-size: 26pt;
+  font-weight: 700;
+}}
+
+/* Progress indicator */
+*[class="progress"] {{
+  font-size: 16pt;
+  font-weight: 700;
+}}
+
+/* Timer display */
+*[class="timer"] {{
+  font-size: 15pt;
+}}
+
+/* Score label */
+*[class="score"] {{
+  font-size: 14pt;
+}}
+
+/* Feedback - correct answer */
+*[class="feedback_correct"] {{
+  font-size: 15pt;
+  font-weight: 700;
+  color: #16a34a;
+}}
+
+/* Feedback - wrong answer */
+*[class="feedback_wrong"] {{
+  font-size: 15pt;
+  font-weight: 700;
+  color: #dc2626;
+}}
+
+/* Recognition result label */
+*[class="recognized"] {{
+  font-size: 14pt;
+}}
+
+/* Recognition failure warning */
+*[class="recognized_warn"] {{
+  font-size: 14pt;
+  font-weight: 700;
+  color: #d97706;
+}}
+
+/* Result score on summary page */
+*[class="result_score"] {{
+  font-size: 16pt;
+  font-weight: 700;
+  color: {QTMATERIAL_PRIMARYCOLOR};
+}}
+
+/* Summary stats text */
+*[class="summary_stat"] {{
+  font-size: 14pt;
+}}
+
+/* Detail info in dialog */
+*[class="detail_info"] {{
+  font-size: 13pt;
+}}
+
+/* Group box title */
+QGroupBox {{
+  font-weight: 700;
+}}
+
+/* Start button emphasis */
+*[class="primary_action"] {{
+  font-weight: 700;
+}}
+
+/* Handwriting canvas - keep white background regardless of theme */
+HandwritingCanvas {{
+  background: #ffffff;
+  border: 2px solid {QTMATERIAL_SECONDARYDARKCOLOR};
+  border-radius: 8px;
+}}

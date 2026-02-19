@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from PyQt5.QtCore import QTimer, pyqtSignal
-from PyQt5.QtGui import QIntValidator
+from PyQt5.QtCore import QPropertyAnimation, QTimer, pyqtSignal
+from PyQt5.QtGui import QColor, QIntValidator
 from PyQt5.QtWidgets import (
+    QGraphicsOpacityEffect,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -66,19 +67,19 @@ class PracticePage(QWidget):
         top_row = QHBoxLayout()
         self.progress_label = QLabel("")
         self.time_label = QLabel("00:00")
-        self.progress_label.setStyleSheet("font-size: 16pt; font-weight: 700;")
-        self.time_label.setStyleSheet("font-size: 15pt; color: #374151;")
+        self.progress_label.setProperty("class", "progress")
+        self.time_label.setProperty("class", "timer")
         top_row.addWidget(self.progress_label)
         top_row.addStretch()
         top_row.addWidget(self.time_label)
         root.addLayout(top_row)
 
         self.question_label = QLabel("")
-        self.question_label.setStyleSheet("font-size: 26pt; font-weight: 700;")
+        self.question_label.setProperty("class", "question")
         root.addWidget(self.question_label)
 
         self.tip_label = QLabel("")
-        self.tip_label.setStyleSheet("font-size: 14pt; color: #4b5563;")
+        self.tip_label.setProperty("class", "subtitle")
         root.addWidget(self.tip_label)
         self.canvas = HandwritingCanvas()
         root.addWidget(self.canvas, stretch=3)
@@ -101,12 +102,20 @@ class PracticePage(QWidget):
         answer_row.addWidget(self.answer_edit)
         root.addLayout(answer_row)
 
+        self._flash_banner = QLabel("")
+        self._flash_banner.setFixedHeight(48)
+        self._flash_banner.setAlignment(self.question_label.alignment())
+        self._flash_opacity = QGraphicsOpacityEffect(self._flash_banner)
+        self._flash_opacity.setOpacity(0.0)
+        self._flash_banner.setGraphicsEffect(self._flash_opacity)
+        root.addWidget(self._flash_banner)
+
         self.feedback_label = QLabel("")
-        self.feedback_label.setStyleSheet("font-size: 15pt; font-weight: 700;")
+        self.feedback_label.setProperty("class", "feedback_correct")
         root.addWidget(self.feedback_label)
 
         self.score_label = QLabel("")
-        self.score_label.setStyleSheet("font-size: 14pt;")
+        self.score_label.setProperty("class", "score")
         root.addWidget(self.score_label)
 
         button_row = QHBoxLayout()
@@ -135,7 +144,6 @@ class PracticePage(QWidget):
         self.canvas.drawing_changed.connect(self._on_canvas_drawing_changed)
         self.canvas.stroke_finished.connect(self._on_stroke_finished)
 
-        self.setStyleSheet("QWidget { font-size: 14pt; } QPushButton { padding: 6px 12px; }")
 
     def retranslate_ui(self) -> None:
         tr = self._localizer.tr
@@ -196,12 +204,30 @@ class PracticePage(QWidget):
         self._correct_count = correct_count
         self._answered_count = answered_count
         self._refresh_dynamic_text()
-        color = "#16a34a" if is_correct else "#dc2626"
-        self.feedback_label.setStyleSheet(f"font-size: 15pt; font-weight: 700; color: {color};")
+        cls = "feedback_correct" if is_correct else "feedback_wrong"
+        self.feedback_label.setProperty("class", cls)
+        self.feedback_label.style().unpolish(self.feedback_label)
+        self.feedback_label.style().polish(self.feedback_label)
+        self._play_flash(is_correct)
         self.submit_button.setEnabled(False)
         self.next_button.setEnabled(True)
         if self._auto_flow_active:
             self._auto_next_timer.start(_AUTO_NEXT_DELAY_MS)
+
+    def _play_flash(self, is_correct: bool) -> None:
+        color = "#c6f6d5" if is_correct else "#fed7d7"
+        icon = "\u2714" if is_correct else "\u2718"
+        self._flash_banner.setText(f"  {icon}")
+        self._flash_banner.setStyleSheet(
+            f"background-color: {color}; border-radius: 8px;"
+            f" font-size: 22pt; font-weight: 700;"
+            f" color: {'#16a34a' if is_correct else '#dc2626'};"
+        )
+        anim = QPropertyAnimation(self._flash_opacity, b"opacity", self)
+        anim.setDuration(700)
+        anim.setStartValue(1.0)
+        anim.setEndValue(0.0)
+        anim.start(QPropertyAnimation.DeleteWhenStopped)
 
     def _submit(self) -> None:
         self._auto_recognize_timer.stop()
@@ -276,8 +302,11 @@ class PracticePage(QWidget):
         )
 
     def _on_canvas_drawing_changed(self) -> None:
+        self._auto_recognize_timer.stop()
         self._recognized_value = None
-        self.recognized_label.setStyleSheet("font-size: 14pt;")
+        self.recognized_label.setProperty("class", "recognized")
+        self.recognized_label.style().unpolish(self.recognized_label)
+        self.recognized_label.style().polish(self.recognized_label)
         self._refresh_dynamic_text()
 
     def _on_stroke_finished(self) -> None:
@@ -297,7 +326,9 @@ class PracticePage(QWidget):
             return
         self.canvas.clear_canvas()
         self.recognized_label.setText(self._localizer.tr("auto_recognition_retry"))
-        self.recognized_label.setStyleSheet("font-size: 14pt; color: #d97706; font-weight: 700;")
+        self.recognized_label.setProperty("class", "recognized_warn")
+        self.recognized_label.style().unpolish(self.recognized_label)
+        self.recognized_label.style().polish(self.recognized_label)
 
     def _on_auto_next_timeout(self) -> None:
         self._auto_flow_active = False

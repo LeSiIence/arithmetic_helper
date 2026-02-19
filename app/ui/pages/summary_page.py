@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtGui import QBrush, QColor
 from PyQt5.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -10,6 +11,11 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+_COLOR_CORRECT_BG = QColor("#c6f6d5")
+_COLOR_CORRECT_FG = QColor("#166534")
+_COLOR_WRONG_BG = QColor("#fed7d7")
+_COLOR_WRONG_FG = QColor("#991b1b")
 
 from app.domain.models import SessionResult
 from app.i18n.localizer import Localizer
@@ -32,13 +38,13 @@ class SummaryPage(QWidget):
         root.setSpacing(12)
 
         self.title_label = QLabel("")
-        self.title_label.setStyleSheet("font-size: 24px; font-weight: 700;")
+        self.title_label.setProperty("class", "page_title")
         self.result_label = QLabel("")
         self.accuracy_label = QLabel("")
         self.time_label = QLabel("")
-        self.result_label.setStyleSheet("font-size: 16pt; font-weight: 700;")
-        self.accuracy_label.setStyleSheet("font-size: 14pt;")
-        self.time_label.setStyleSheet("font-size: 14pt;")
+        self.result_label.setProperty("class", "result_score")
+        self.accuracy_label.setProperty("class", "summary_stat")
+        self.time_label.setProperty("class", "summary_stat")
         root.addWidget(self.title_label)
         root.addWidget(self.result_label)
         root.addWidget(self.accuracy_label)
@@ -61,7 +67,6 @@ class SummaryPage(QWidget):
 
         self.back_button.clicked.connect(self.back_to_menu_requested.emit)
         self.history_button.clicked.connect(self.view_history_requested.emit)
-        self.setStyleSheet("QWidget { font-size: 14pt; } QPushButton { padding: 6px 12px; }")
 
     def retranslate_ui(self) -> None:
         tr = self._localizer.tr
@@ -94,6 +99,11 @@ class SummaryPage(QWidget):
         self.review_table.setRowCount(len(result.details))
         for row, item in enumerate(result.details):
             status = tr("status_correct") if item.is_correct else tr("status_wrong")
+            bg = QBrush(_COLOR_CORRECT_BG if item.is_correct else _COLOR_WRONG_BG)
+            fg = QBrush(_COLOR_CORRECT_FG if item.is_correct else _COLOR_WRONG_FG)
             values = [item.question, str(item.user_answer), str(item.correct_answer), status]
             for col, value in enumerate(values):
-                self.review_table.setItem(row, col, QTableWidgetItem(value))
+                cell = QTableWidgetItem(value)
+                cell.setBackground(bg)
+                cell.setForeground(fg)
+                self.review_table.setItem(row, col, cell)

@@ -1,50 +1,50 @@
 # Arithmetic Practice Assistant (PyQt)
 
-基于 `proposal.pdf` 需求实现的桌面练习系统，使用 Python + PyQt5，采用分层解耦设计。
+A desktop arithmetic practice system built with Python + PyQt5, featuring a layered and decoupled architecture.
 
-## 功能覆盖
+## Features
 
-- 学生姓名输入（用于会话标识）
-- 题目生成参数可配置
-  - 运算类型：加减乘除、混合运算
-  - 难度范围：1-10 / 1-50 / 1-100
-  - 混合运算符数量
-  - 括号开关与最大括号对数
-  - 题目数量（5-50）
-- 逐题作答与即时反馈（正确/错误）
-- 手写数字识别（按钮识别 + 提交时自动识别兜底）
-- 分数与正确率自动统计
-- 会话结果自动保存到 `data/history.csv`
-- 历史记录查询（按姓名过滤）与详情查看（题目、答案、正误）
-- 儿童友好大字体界面（>=14pt）
-- 支持中英文界面切换（Setup 页面 Language 下拉框）
+- Student name input for session identification
+- Configurable question generation
+  - Operation types: addition, subtraction, multiplication, division, and mixed operations
+  - Difficulty ranges: 1-10 / 1-50 / 1-100
+  - Number of operators in mixed mode
+  - Parentheses toggle and max bracket pairs
+  - Question count (5-50)
+- One-by-one answering with instant feedback (correct / wrong)
+- Handwriting digit recognition (manual recognize button + auto-recognition fallback on submit)
+- Automatic score and accuracy tracking
+- Session results saved to `data/history.csv`
+- History lookup (filter by name) with detail view (questions, answers, correctness)
+- Child-friendly large-font UI (>=14pt)
+- Chinese / English language switching (Language dropdown on Setup page)
 
-## 解耦架构
+## Architecture
 
-- `app/domain`：纯数据模型
-- `app/services`：题目生成、会话评分业务逻辑
-- `app/repositories`：CSV 持久化读写
-- `app/controllers`：UI 与业务层编排
-- `app/ui`：页面组件与主窗口
+- `app/domain` – Pure data models
+- `app/services` – Question generation and session scoring logic
+- `app/repositories` – CSV persistence (read / write)
+- `app/controllers` – Orchestration between UI and business layer
+- `app/ui` – Page components and main window
 
-## 运行
+## Getting Started
 
-1. 安装依赖
+1. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-2. 启动程序
+2. Run the application
 
 ```bash
 python main.py
 ```
 
-## 数据文件
+## Data Files
 
-- 历史记录默认保存为：`data/history.csv`
+- History records are saved to: `data/history.csv`
 
-## 开发文档
+## Development
 
-- 架构、注释规范与扩展说明：`docs/DEVELOPMENT.md`
+- Architecture, coding conventions, and extension guide: `docs/DEVELOPMENT.md`
