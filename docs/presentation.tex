@@ -1,0 +1,442 @@
+% !TEX program = xelatex
+\documentclass[aspectratio=169,11pt]{beamer}
+
+% ── 中文支持 ──
+\usepackage{fontspec}
+\usepackage[UTF8,noindent]{ctex}
+
+% ── 主题 ──
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+
+% ── 包 ──
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{fontawesome5}
+
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit,calc}
+
+% ── 颜色 ──
+\definecolor{accent}{HTML}{2E86C1}
+\definecolor{good}{HTML}{27AE60}
+\definecolor{bad}{HTML}{E74C3C}
+\definecolor{codebg}{HTML}{F5F5F5}
+\definecolor{codeframe}{HTML}{DDDDDD}
+
+\setbeamercolor{block title}{bg=accent,fg=white}
+\setbeamercolor{block body}{bg=accent!8}
+
+% ── 代码样式 ──
+\lstset{
+  basicstyle=\ttfamily\scriptsize,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  rulecolor=\color{codeframe},
+  breaklines=true,
+  columns=fullflexible,
+  language=Python,
+  keywordstyle=\color{accent}\bfseries,
+  commentstyle=\color{gray},
+  stringstyle=\color{good},
+  showstringspaces=false,
+}
+
+% ── 元信息 ──
+\title[Arithmetic Helper]{Arithmetic Practice Assistant}
+\subtitle{面向儿童的智能算术练习桌面应用}
+\author{Development Team}
+\date{\today}
+
+\begin{document}
+
+% ============================
+% 封面
+% ============================
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% ============================
+% 目录
+% ============================
+\begin{frame}{Outline}
+  \tableofcontents
+\end{frame}
+
+% ============================================================
+\section{Sales Pitch}
+% ============================================================
+
+% ------- 产品定位 -------
+\begin{frame}{产品定位}
+  \begin{columns}[T]
+    \column{0.55\textwidth}
+    \begin{block}{我们是什么？}
+      一款面向 \textbf{K-12 儿童} 的桌面算术练习工具：
+      \begin{itemize}
+        \item 可配置的四则运算 \& 混合运算
+        \item 支持括号、难度梯度
+        \item \textbf{手写识别}输入
+        \item 即时反馈 + 成绩统计
+      \end{itemize}
+    \end{block}
+
+    \column{0.4\textwidth}
+    \centering
+    \begin{tikzpicture}[scale=0.8]
+      \node[draw,rounded corners=8pt,fill=accent!12,
+            minimum width=3.6cm,minimum height=2.8cm,align=center]
+        {\Large\faCalculator\\[6pt]\small 简洁 · 高效 · 有趣};
+    \end{tikzpicture}
+  \end{columns}
+\end{frame}
+
+% ------- 核心卖点一览 -------
+\begin{frame}{核心卖点}
+  \begin{columns}[T]
+    \column{0.32\textwidth}
+    \centering
+    {\Large\faLaptopCode}\\[6pt]
+    \textbf{简洁界面}\\[4pt]
+    \small 儿童友好大字体($\ge$14pt)\\
+    Material Design 风格\\
+    中英文一键切换
+
+    \column{0.32\textwidth}
+    \centering
+    {\Large\faPenFancy}\\[6pt]
+    \textbf{流畅手写识别}\\[4pt]
+    \small 画布手写 → 即时识别\\
+    多后端可选\\
+    本地/云端灵活切换
+
+    \column{0.32\textwidth}
+    \centering
+    {\Large\faChartBar}\\[6pt]
+    \textbf{丰富历史记录}\\[4pt]
+    \small 按姓名检索\\
+    正确率颜色标识\\
+    逐题详情回顾
+  \end{columns}
+\end{frame}
+
+% ------- 成本对比 -------
+\begin{frame}{方案对比：为什么不用 AI 出题？}
+  \centering
+  \renewcommand{\arraystretch}{1.4}
+  \begin{tabular}{l >{\centering\arraybackslash}p{5cm} >{\centering\arraybackslash}p{5cm}}
+    \toprule
+    & \textbf{本项目（代码生成）} & \textbf{纯 AI 生成} \\
+    \midrule
+    \textbf{正确性}
+      & \textcolor{good}{\faCheckCircle\; 100\% 确定性正确}
+      & \textcolor{bad}{\faTimesCircle\; 可能出错} \\
+    \textbf{成本}
+      & \textcolor{good}{\faCheckCircle\; 零边际成本}
+      & \textcolor{bad}{\faTimesCircle\; 按 token 计费} \\
+    \textbf{延迟}
+      & \textcolor{good}{\faCheckCircle\; 毫秒级本地生成}
+      & \textcolor{bad}{\faTimesCircle\; 网络延迟} \\
+    \textbf{离线可用}
+      & \textcolor{good}{\faCheckCircle\; 完全离线}
+      & \textcolor{bad}{\faTimesCircle\; 依赖网络} \\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{12pt}
+  \begin{block}{结论}
+    对于\textbf{结构化、规则明确}的算术题目，代码生成在正确性和成本上\textbf{完胜} AI。
+  \end{block}
+\end{frame}
+
+% ------- 手写识别 -------
+\begin{frame}{手写识别：多后端策略}
+  \begin{columns}[T]
+    \column{0.5\textwidth}
+    \begin{block}{本地后端（零成本）}
+      \begin{itemize}
+        \item \texttt{sklearn-svm} — 内置 SVM 分类器
+        \item \texttt{tesseract} — Tesseract OCR
+        \item \texttt{paddle-ocr} — PaddleOCR
+      \end{itemize}
+    \end{block}
+
+    \column{0.5\textwidth}
+    \begin{block}{云端后端（高精度）}
+      \begin{itemize}
+        \item Google Cloud Vision
+        \item 百度 OCR
+        \item 腾讯云 OCR
+      \end{itemize}
+    \end{block}
+  \end{columns}
+
+  \vspace{10pt}
+  \centering
+  \tikz{
+    \node[draw=accent,rounded corners,fill=accent!8,
+          inner sep=8pt,text width=12cm,align=center]
+      {用户可在设置页面自由选择后端 — 离线环境用本地，追求精度用云端};
+  }
+\end{frame}
+
+% ------- 历史记录功能 -------
+\begin{frame}{历史记录功能}
+  \begin{columns}[T]
+    \column{0.55\textwidth}
+    \begin{itemize}
+      \item 每次练习自动保存到 CSV
+      \item 按学生姓名筛选
+      \item 正确率颜色编码：
+        \begin{itemize}
+          \item \textcolor{good}{$\ge 80\%$：绿色}
+          \item \textcolor{orange}{$\ge 60\%$：黄色}
+          \item \textcolor{bad}{$< 60\%$：红色}
+        \end{itemize}
+      \item 点击查看逐题详情
+      \item 便于家长/教师追踪学习进度
+    \end{itemize}
+
+    \column{0.4\textwidth}
+    \centering
+    \begin{tikzpicture}[scale=0.75,every node/.style={font=\small}]
+      \node[draw,rounded corners,fill=good!15,minimum width=3cm,minimum height=0.7cm]
+        (r1) at (0,2) {Session A — 95\%};
+      \node[draw,rounded corners,fill=orange!15,minimum width=3cm,minimum height=0.7cm]
+        (r2) at (0,1) {Session B — 72\%};
+      \node[draw,rounded corners,fill=bad!15,minimum width=3cm,minimum height=0.7cm]
+        (r3) at (0,0) {Session C — 48\%};
+      \node[above=4pt of r1,font=\bfseries] {历史列表};
+    \end{tikzpicture}
+  \end{columns}
+\end{frame}
+
+% ============================================================
+\section{开发与代码}
+% ============================================================
+
+% ------- 项目架构总览 -------
+\begin{frame}{面向对象分层架构}
+  \centering
+  \begin{tikzpicture}[
+    layer/.style={draw,rounded corners=6pt,minimum width=10cm,
+                  minimum height=1cm,align=center,font=\small\bfseries},
+    arr/.style={-{Stealth[length=5pt]},thick,gray},
+    node distance=0.5cm
+  ]
+    \node[layer,fill=accent!60,text=white]   (ui)   {UI 层 \normalfont — pages / widgets / main\_window};
+    \node[layer,fill=accent!40,text=white,below=of ui]  (ctrl) {Controller 层 \normalfont — practice\_controller};
+    \node[layer,fill=accent!25,below=of ctrl] (svc)  {Service 层 \normalfont — problem\_generator / session\_service / recognizers};
+    \node[layer,fill=accent!12,below=of svc]  (repo) {Repository 层 \normalfont — history\_repository (CSV)};
+    \node[layer,fill=gray!12,below=of repo]   (dom)  {Domain 层 \normalfont — models (dataclasses)};
+
+    \draw[arr] (ui)   -- (ctrl);
+    \draw[arr] (ctrl) -- (svc);
+    \draw[arr] (svc)  -- (repo);
+    \draw[arr] (repo) -- (dom);
+    \draw[arr] (svc)  -- (dom);
+  \end{tikzpicture}
+\end{frame}
+
+% ------- 目录结构 -------
+\begin{frame}[fragile]{项目目录结构}
+\begin{lstlisting}[language={},basicstyle=\ttfamily\scriptsize]
+arithmetic_helper/
+  main.py                        # 入口 + .env 加载
+  app/
+    domain/models.py             # PracticeConfig, PracticeQuestion,
+                                 # AnswerRecord, SessionResult
+    services/
+      recognizer_backend.py      # RecognizerBackend (ABC)
+      handwriting_recognizer.py  # sklearn SVM
+      google_vision_recognizer.py
+      baidu_ocr_recognizer.py
+      tencent_ocr_recognizer.py
+      tesseract_recognizer.py
+      paddle_ocr_recognizer.py
+      problem_generator.py       # 题目生成引擎
+      session_service.py         # 会话生命周期管理
+    repositories/
+      history_repository.py      # CSV 持久化
+    controllers/
+      practice_controller.py     # 信号驱动的 UI 编排
+    ui/
+      main_window.py             # 主窗口 + 依赖注入
+      pages/  widgets/           # 页面 & 组件
+    i18n/localizer.py            # 国际化
+\end{lstlisting}
+\end{frame}
+
+% ------- 设计模式 -------
+\begin{frame}{关键设计模式}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+    \begin{block}{\faProjectDiagram\; 策略模式（Strategy）}
+      \texttt{RecognizerBackend} 抽象基类\\
+      6 种具体实现可即插即用\\
+      运行时按用户选择切换
+    \end{block}
+
+    \vspace{6pt}
+    \begin{block}{\faIndustry\; 工厂模式（Factory）}
+      \texttt{MainWindow.\_build\_recognizer()}\\
+      根据 key 字符串实例化后端\\
+      内置缓存避免重复创建
+    \end{block}
+
+    \column{0.48\textwidth}
+    \begin{block}{\faSyringe\; 依赖注入（DI）}
+      \texttt{MainWindow} 统一创建并注入\\
+      Service → Controller → Page\\
+      方便单元测试 mock
+    \end{block}
+
+    \vspace{6pt}
+    \begin{block}{\faBroadcastTower\; 信号/槽通信}
+      PyQt 信号驱动 UI 更新\\
+      Controller 发射信号\\
+      Page 订阅响应
+    \end{block}
+  \end{columns}
+\end{frame}
+
+% ------- 识别抽象类 -------
+\begin{frame}[fragile]{识别后端：抽象与扩展}
+\begin{lstlisting}[language=Python]
+class RecognizerBackend(ABC):
+    @abstractmethod
+    def recognize(self, image: QImage) -> int | None:
+        """识别手写内容，返回整数或 None"""
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """后端显示名称"""
+
+    @property
+    @abstractmethod
+    def available(self) -> bool:
+        """依赖/密钥是否就绪"""
+
+    @staticmethod
+    def _qimage_to_png_bytes(image: QImage) -> bytes | None:
+        """共享工具方法：QImage -> PNG bytes"""
+\end{lstlisting}
+
+  \vspace{4pt}
+  \centering
+  \tikz{\node[draw=good,rounded corners,fill=good!8,inner sep=6pt,text width=11cm,align=center]
+    {扩展新后端只需继承此类，实现 3 个抽象成员即可接入系统};}
+\end{frame}
+
+% ------- API Key 管理 -------
+\begin{frame}[fragile]{通用 API-Key 接口}
+  \begin{columns}[T]
+    \column{0.5\textwidth}
+    \begin{block}{机制}
+      \begin{enumerate}
+        \item \texttt{main.py} 启动时加载 \texttt{.env}
+        \item 写入 \texttt{os.environ}
+        \item 各 Recognizer 读取所需变量
+        \item \texttt{available} 属性检查密钥
+      \end{enumerate}
+    \end{block}
+
+    \column{0.48\textwidth}
+\begin{lstlisting}[language={}]
+# .env 示例
+GOOGLE_VISION_API_KEY=xxx
+BAIDU_API_KEY=xxx
+BAIDU_SECRET_KEY=xxx
+TENCENT_SECRET_ID=xxx
+TENCENT_SECRET_KEY=xxx
+\end{lstlisting}
+  \end{columns}
+
+  \vspace{8pt}
+  \centering
+  \tikz{\node[draw=accent,rounded corners,fill=accent!8,
+    inner sep=6pt,text width=12cm,align=center]{
+    用户只需修改 \texttt{.env} 文件即可切换 OCR 提供商 — \textbf{零代码改动}
+  };}
+\end{frame}
+
+% ------- 技术栈 -------
+\begin{frame}{技术栈}
+  \centering
+  \renewcommand{\arraystretch}{1.4}
+  \begin{tabular}{ll}
+    \toprule
+    \textbf{层面} & \textbf{技术} \\
+    \midrule
+    GUI 框架       & PyQt5 + qt-material 主题 \\
+    语言           & Python 3.10+ \\
+    本地识别       & scikit-learn (SVM)、Tesseract、PaddleOCR \\
+    云端识别       & Google Vision、百度 OCR、腾讯云 OCR \\
+    数据持久化     & CSV（轻量、可迁移） \\
+    国际化         & 自研 Localizer（zh\_CN / en\_US） \\
+    样式           & Material Design + 自定义 CSS \\
+    \bottomrule
+  \end{tabular}
+\end{frame}
+
+% ------- 可扩展性 -------
+\begin{frame}{可扩展性}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+    \begin{block}{当前支持}
+      \begin{itemize}
+        \item 四则运算 + 混合运算
+        \item 6 种识别后端
+        \item 中文 / 英文界面
+        \item CSV 历史存储
+      \end{itemize}
+    \end{block}
+
+    \column{0.48\textwidth}
+    \begin{block}{扩展方向}
+      \begin{itemize}
+        \item 新题型（分数、方程 \dots）
+        \item 新识别后端（继承 ABC）
+        \item 新语言（扩展字典）
+        \item 新存储（SQLite / 云端）
+        \item 自适应难度算法
+      \end{itemize}
+    \end{block}
+  \end{columns}
+
+  \vspace{10pt}
+  \centering
+  \begin{tikzpicture}
+    \node[draw=accent,rounded corners=10pt,fill=accent!8,
+          inner sep=10pt,text width=11cm,align=center,font=\large]
+      {分层解耦 + 抽象接口 = \textbf{低成本扩展}};
+  \end{tikzpicture}
+\end{frame}
+
+% ============================================================
+\section{总结}
+% ============================================================
+
+\begin{frame}{总结}
+  \begin{enumerate}
+    \setlength{\itemsep}{10pt}
+    \item \textbf{产品层面}：简洁 UI + 手写识别 + 丰富历史 → 儿童友好的练习体验
+    \item \textbf{成本优势}：代码确定性生成题目，零边际成本，100\% 正确
+    \item \textbf{工程质量}：五层解耦架构、策略/工厂/DI 设计模式
+    \item \textbf{灵活扩展}：抽象识别接口 + 通用 API-Key 管理 → 即插即用
+  \end{enumerate}
+
+  \vspace{16pt}
+  \centering
+  {\Large\bfseries\textcolor{accent}{Thank You!}}\\[6pt]
+  {\small Questions \& Discussion}
+\end{frame}
+
+\end{document}

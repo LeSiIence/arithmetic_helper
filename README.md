@@ -19,6 +19,38 @@ A desktop arithmetic practice system built with Python + PyQt5, featuring a laye
 - Child-friendly large-font UI (>=14pt)
 - Chinese / English language switching (Language dropdown on Setup page)
 
+## Screenshots
+
+### Setup Page
+
+Configure student name, operations, difficulty, and question count before starting a session.
+
+![Setup Page](docs/main_page.png)
+
+### Practice & Handwriting Recognition
+
+Answer questions one by one; write digits on the canvas and the app recognizes them automatically.
+
+![Practice Page](docs/recog.png)
+
+### History – All Students
+
+View all session records with color-coded accuracy (green >= 80%, yellow >= 60%, red < 60%).
+
+![History – All](docs/all_history.png)
+
+### History – Filtered by Name
+
+Filter history by student name to track individual progress.
+
+![History – Filtered](docs/jack_history.png)
+
+### Session Details
+
+Click "View" to inspect every question, your answer, the correct answer, and the result.
+
+![Session Details](docs/detail_history.png)
+
 ## Architecture
 
 - `app/domain` – Pure data models
