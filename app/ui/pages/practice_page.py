@@ -17,6 +17,10 @@ from app.services.recognizer_backend import RecognizerBackend
 from app.ui.widgets.handwriting_canvas import HandwritingCanvas
 
 
+_AUTO_RECOGNIZE_DELAY_MS = 800
+_AUTO_NEXT_DELAY_MS = 800
+
+
 class PracticePage(QWidget):
     submit_requested = pyqtSignal(str)
     next_requested = pyqtSignal()
@@ -39,10 +43,20 @@ class PracticePage(QWidget):
         self._current_expression = ""
         self._feedback_state: tuple[bool, int] | None = None
         self._recognized_value: int | None = None
+        self._auto_flow_active = False
         self._build_ui()
         self.retranslate_ui()
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._tick)
+
+        self._auto_recognize_timer = QTimer(self)
+        self._auto_recognize_timer.setSingleShot(True)
+        self._auto_recognize_timer.timeout.connect(self._on_auto_recognize_timeout)
+
+        self._auto_next_timer = QTimer(self)
+        self._auto_next_timer.setSingleShot(True)
+        self._auto_next_timer.timeout.connect(self._on_auto_next_timeout)
+
         self._localizer.locale_changed.connect(self.retranslate_ui)
 
     def _build_ui(self) -> None:
@@ -67,7 +81,7 @@ class PracticePage(QWidget):
         self.tip_label.setStyleSheet("font-size: 14pt; color: #4b5563;")
         root.addWidget(self.tip_label)
         self.canvas = HandwritingCanvas()
-        root.addWidget(self.canvas)
+        root.addWidget(self.canvas, stretch=3)
 
         recognized_row = QHBoxLayout()
         self.recognized_label = QLabel("")
@@ -119,6 +133,7 @@ class PracticePage(QWidget):
         self.next_button.clicked.connect(self.next_requested.emit)
         self.answer_edit.returnPressed.connect(self._submit)
         self.canvas.drawing_changed.connect(self._on_canvas_drawing_changed)
+        self.canvas.stroke_finished.connect(self._on_stroke_finished)
 
         self.setStyleSheet("QWidget { font-size: 14pt; } QPushButton { padding: 6px 12px; }")
 
@@ -145,6 +160,8 @@ class PracticePage(QWidget):
 
     def stop_timer(self) -> None:
         self._timer.stop()
+        self._auto_recognize_timer.stop()
+        self._auto_next_timer.stop()
 
     def show_question(
         self,
@@ -155,6 +172,9 @@ class PracticePage(QWidget):
         correct_count: int,
         answered_count: int,
     ) -> None:
+        self._auto_recognize_timer.stop()
+        self._auto_next_timer.stop()
+        self._auto_flow_active = False
         self._elapsed_seconds = elapsed_seconds
         self._update_time_label()
         self._current_index = current
@@ -180,8 +200,12 @@ class PracticePage(QWidget):
         self.feedback_label.setStyleSheet(f"font-size: 15pt; font-weight: 700; color: {color};")
         self.submit_button.setEnabled(False)
         self.next_button.setEnabled(True)
+        if self._auto_flow_active:
+            self._auto_next_timer.start(_AUTO_NEXT_DELAY_MS)
 
     def _submit(self) -> None:
+        self._auto_recognize_timer.stop()
+        self._auto_flow_active = False
         answer = self.answer_edit.text().strip()
         if not answer:
             answer = self._try_recognize_to_answer()
@@ -253,7 +277,31 @@ class PracticePage(QWidget):
 
     def _on_canvas_drawing_changed(self) -> None:
         self._recognized_value = None
+        self.recognized_label.setStyleSheet("font-size: 14pt;")
         self._refresh_dynamic_text()
+
+    def _on_stroke_finished(self) -> None:
+        """Restart the auto-recognize countdown after every pen-up."""
+        if not self.submit_button.isEnabled():
+            return
+        self._auto_recognize_timer.start(_AUTO_RECOGNIZE_DELAY_MS)
+
+    def _on_auto_recognize_timeout(self) -> None:
+        if not self.submit_button.isEnabled():
+            return
+        answer = self._try_recognize_to_answer()
+        if answer:
+            self.answer_edit.setText(answer)
+            self._auto_flow_active = True
+            self.submit_requested.emit(answer)
+            return
+        self.canvas.clear_canvas()
+        self.recognized_label.setText(self._localizer.tr("auto_recognition_retry"))
+        self.recognized_label.setStyleSheet("font-size: 14pt; color: #d97706; font-weight: 700;")
+
+    def _on_auto_next_timeout(self) -> None:
+        self._auto_flow_active = False
+        self.next_requested.emit()
 
     def _try_recognize_to_answer(self) -> str:
         if self._recognizer is None:

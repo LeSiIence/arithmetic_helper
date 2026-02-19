@@ -9,17 +9,18 @@ class HandwritingCanvas(QWidget):
     """Handwriting board with 1:1 widget-coordinate drawing."""
 
     drawing_changed = pyqtSignal()
+    stroke_finished = pyqtSignal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setMinimumHeight(170)
+        self.setMinimumHeight(280)
         self.setStyleSheet("background: #ffffff; border: 2px solid #9aa4b2; border-radius: 8px;")
 
         self._image = QImage(1, 1, QImage.Format_RGB32)
         self._image.fill(QColor("white"))
         self._last_point = QPoint()
         self._drawing = False
-        self._pen = QPen(Qt.black, 4, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        self._pen = QPen(Qt.black, 6, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
 
     def clear_canvas(self) -> None:
         self._image.fill(QColor("white"))
@@ -52,6 +53,7 @@ class HandwritingCanvas(QWidget):
     def mouseReleaseEvent(self, event) -> None:  # noqa: N802 - Qt naming style
         if event.button() == Qt.LeftButton:
             self._drawing = False
+            self.stroke_finished.emit()
         super().mouseReleaseEvent(event)
 
     def resizeEvent(self, event) -> None:  # noqa: N802 - Qt naming style

@@ -6,6 +6,7 @@ import logging
 import os
 import sys
 
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QStackedWidget
 
 from app.controllers.practice_controller import PracticeController
@@ -35,7 +36,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.localizer = Localizer(default_locale="zh_CN")
         self.setWindowTitle(self.localizer.tr("app_title"))
-        self.resize(980, 720)
+        self.resize(1200, 900)
 
         self._recognizer_cache: dict[str, RecognizerBackend] = {}
 
@@ -165,6 +166,8 @@ class MainWindow(QMainWindow):
 
 def run_app() -> None:
     """Application bootstrap entrypoint used by ``main.py``."""
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
